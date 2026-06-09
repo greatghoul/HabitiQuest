@@ -1,0 +1,5 @@
+{
+  "buildCommand": "go build -o main main.go",
+  "installCommand": "",
+  "framework": null
+}

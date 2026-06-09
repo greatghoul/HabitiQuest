@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HabitiQuest</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  color: #e0e0e0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.container {
+  max-width: 640px;
+  width: 90%;
+  padding: 3rem 2rem;
+  background: rgba(255,255,255,0.05);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  text-align: center;
+}
+h1 { font-size: 2rem; margin-bottom: 1rem; color: #fff; }
+.status {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  word-break: break-all;
+}
+.status.loading { background: rgba(255,193,7,0.15); color: #ffc107; }
+.status.error { background: rgba(244,67,54,0.15); color: #f44336; }
+.status.success { background: rgba(76,175,80,0.15); color: #4caf50; }
+.welcome {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  color: #fff;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.stat {
+  background: rgba(255,255,255,0.08);
+  padding: 1rem;
+  border-radius: 8px;
+}
+.stat-label { font-size: 0.75rem; color: #888; text-transform: uppercase; }
+.stat-value { font-size: 1.5rem; font-weight: bold; color: #fff; }
+.actions { margin-top: 1rem; }
+button {
+  background: #6c63ff;
+  color: #fff;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin: 0.25rem;
+}
+button:hover { background: #5a52d5; }
+button:disabled { background: #444; cursor: not-allowed; }
+button.secondary { background: #3a3a6a; }
+button.secondary:hover { background: #2e2e58; }
+.webhook-status {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+.webhook-status.success { background: rgba(76,175,80,0.1); color: #4caf50; }
+.webhook-status.error { background: rgba(244,67,54,0.1); color: #f44336; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>HabitiQuest</h1>
+  <div id="status" class="status loading">Loading Habitica profile...</div>
+  <div id="welcome" class="welcome"></div>
+  <div id="stats"></div>
+  <div class="actions">
+    <button id="btnRefresh" class="secondary" onclick="fetchUser()">Refresh</button>
+    <button id="btnWebhook" onclick="configureWebhook()" style="display:none">Configure Quest Webhook</button>
+  </div>
+  <div id="webhookStatus" class="webhook-status"></div>
+</div>
+<script>
+function fetchUser() {
+  var el = document.getElementById('status');
+  var welcome = document.getElementById('welcome');
+  var stats = document.getElementById('stats');
+  var btn = document.getElementById('btnWebhook');
+  el.className = 'status loading';
+  el.textContent = 'Loading Habitica profile...';
+  welcome.textContent = '';
+  stats.innerHTML = '';
+  btn.style.display = 'none';
+
+  fetch('/api/user')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        el.className = 'status success';
+        el.textContent = 'Connected to Habitica';
+        welcome.textContent = data.message;
+        btn.style.display = 'inline-block';
+        var s = data.data.stats;
+        stats.innerHTML =
+          '<div class="stat"><div class="stat-label">HP</div><div class="stat-value">' + s.hp + '</div></div>' +
+          '<div class="stat"><div class="stat-label">MP</div><div class="stat-value">' + s.mp + '</div></div>' +
+          '<div class="stat"><div class="stat-label">EXP</div><div class="stat-value">' + s.exp + '</div></div>' +
+          '<div class="stat"><div class="stat-label">Gold</div><div class="stat-value">' + s.gp + '</div></div>';
+      } else {
+        el.className = 'status error';
+        el.innerHTML = data.message.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:#6c63ff;text-decoration:underline">$1</a>');
+      }
+    })
+    .catch(function(err) {
+      el.className = 'status error';
+      el.textContent = 'Network error: ' + err.message;
+    });
+}
+
+function configureWebhook() {
+  var btn = document.getElementById('btnWebhook');
+  var ws = document.getElementById('webhookStatus');
+  btn.disabled = true;
+  btn.textContent = 'Configuring...';
+  ws.className = 'webhook-status';
+  ws.textContent = '';
+
+  fetch('/api/webhook/configure', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        ws.className = 'webhook-status success';
+        ws.textContent = data.message;
+        btn.style.display = 'none';
+      } else {
+        ws.className = 'webhook-status error';
+        ws.innerHTML = data.message.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:#6c63ff;text-decoration:underline">$1</a>');
+      }
+    })
+    .catch(function(err) {
+      ws.className = 'webhook-status error';
+      ws.textContent = 'Error: ' + err.message;
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = 'Configure Quest Webhook';
+    });
+}
+
+fetchUser();
+</script>
+</body>
+</html>
