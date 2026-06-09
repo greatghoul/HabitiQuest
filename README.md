@@ -1,8 +1,6 @@
 # HabitiQuest - Vercel + Go + Gin + Habitica
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FYOUR_USER%2FYOUR_REPO&env=HABITICA_USER_ID,HABITICA_API_TOKEN&envDescription=Habitica%20API%20credentials%20-%20get%20them%20from%20https%3A%2F%2Fhabitica.com%2Fuser%2Fsettings%2Fapi&project-name=habiti-quest&repository-name=habiti-quest)
-
-> Replace `YOUR_USER` and `YOUR_REPO` in the button URL with your GitHub username and repository name before clicking.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fgreatghoul%2FHabitiQuest&env=HABITICA_USER_ID,HABITICA_API_TOKEN&envDescription=Habitica%20API%20credentials%20-%20get%20them%20from%20https%3A%2F%2Fhabitica.com%2Fuser%2Fsettings%2Fapi&project-name=habiti-quest&repository-name=habiti-quest)
 
 A Hello World app built with [Go](https://go.dev/) and [Gin](https://gin-gonic.com/), deployed on [Vercel](https://vercel.com/), integrating the [Habitica](https://habitica.com/) API.
 
