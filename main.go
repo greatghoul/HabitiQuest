@@ -190,32 +190,49 @@ func checkWebhook(c *gin.Context) {
 		scheme = "https"
 	}
 	expectedURL := fmt.Sprintf("%s://%s/api/webhook/event", scheme, c.Request.Host)
+	fmt.Printf("[Webhook Check] Expected URL: %s\n", expectedURL)
 
 	resp, err := habiticaRequest("GET", "/user/webhook", nil)
 	if err != nil {
+		fmt.Printf("[Webhook Check] HTTP error: %v\n", err)
 		c.JSON(http.StatusOK, gin.H{"configured": false})
 		return
 	}
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
-	var webhooks []struct {
-		Enabled bool   `json:"enabled"`
-		URL     string `json:"url"`
-		Type    string `json:"type"`
+	fmt.Printf("[Webhook Check] Habitica response status: %d, body: %s\n", resp.StatusCode, string(body))
+
+	var result struct {
+		Success bool `json:"success"`
+		Data    []struct {
+			Enabled bool   `json:"enabled"`
+			URL     string `json:"url"`
+			Type    string `json:"type"`
+		} `json:"data"`
 	}
-	if err := json.Unmarshal(body, &webhooks); err != nil {
+	if err := json.Unmarshal(body, &result); err != nil {
+		fmt.Printf("[Webhook Check] JSON parse error: %v\n", err)
 		c.JSON(http.StatusOK, gin.H{"configured": false})
 		return
 	}
 
-	for _, w := range webhooks {
+	if !result.Success {
+		fmt.Printf("[Webhook Check] Habitica API returned success=false\n")
+		c.JSON(http.StatusOK, gin.H{"configured": false})
+		return
+	}
+
+	for _, w := range result.Data {
+		fmt.Printf("[Webhook Check] Webhook: enabled=%v, url=%s, type=%s\n", w.Enabled, w.URL, w.Type)
 		if w.Enabled && w.URL == expectedURL && w.Type == "questActivity" {
+			fmt.Printf("[Webhook Check] Matched configured webhook\n")
 			c.JSON(http.StatusOK, gin.H{"configured": true})
 			return
 		}
 	}
 
+	fmt.Printf("[Webhook Check] No matching webhook found\n")
 	c.JSON(http.StatusOK, gin.H{"configured": false})
 }
 
