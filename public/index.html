@@ -111,7 +111,7 @@ function fetchUser() {
         el.className = 'status success';
         el.textContent = 'Connected to Habitica';
         welcome.textContent = data.message;
-        btn.style.display = 'inline-block';
+        checkWebhook();
         var s = data.data.stats;
         stats.innerHTML =
           '<div class="stat"><div class="stat-label">HP</div><div class="stat-value">' + s.hp + '</div></div>' +
@@ -126,6 +126,19 @@ function fetchUser() {
     .catch(function(err) {
       el.className = 'status error';
       el.textContent = 'Network error: ' + err.message;
+    });
+}
+
+function checkWebhook() {
+  var btn = document.getElementById('btnWebhook');
+
+  fetch('/api/webhook/check')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.style.display = data.configured ? 'none' : 'inline-block';
+    })
+    .catch(function() {
+      btn.style.display = 'inline-block';
     });
 }
 

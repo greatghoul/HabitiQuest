@@ -95,6 +95,7 @@ func main() {
 	})
 
 	r.GET("/api/user", getUser)
+	r.GET("/api/webhook/check", checkWebhook)
 	r.POST("/api/webhook/configure", configureWebhook)
 	r.POST("/api/webhook/event", handleWebhookEvent)
 
@@ -173,6 +174,49 @@ func getUser(c *gin.Context) {
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 		Data:      user.Data,
 	})
+}
+
+func checkWebhook(c *gin.Context) {
+	userID := os.Getenv("HABITICA_USER_ID")
+	apiToken := os.Getenv("HABITICA_API_TOKEN")
+
+	if userID == "" || apiToken == "" {
+		c.JSON(http.StatusOK, gin.H{"configured": false})
+		return
+	}
+
+	scheme := "http"
+	if c.Request.TLS != nil || c.Request.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+	expectedURL := fmt.Sprintf("%s://%s/api/webhook/event", scheme, c.Request.Host)
+
+	resp, err := habiticaRequest("GET", "/user/webhook", nil)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"configured": false})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	var webhooks []struct {
+		Enabled bool   `json:"enabled"`
+		URL     string `json:"url"`
+		Type    string `json:"type"`
+	}
+	if err := json.Unmarshal(body, &webhooks); err != nil {
+		c.JSON(http.StatusOK, gin.H{"configured": false})
+		return
+	}
+
+	for _, w := range webhooks {
+		if w.Enabled && w.URL == expectedURL && w.Type == "questActivity" {
+			c.JSON(http.StatusOK, gin.H{"configured": true})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"configured": false})
 }
 
 func configureWebhook(c *gin.Context) {
