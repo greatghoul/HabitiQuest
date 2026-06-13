@@ -360,11 +360,52 @@ func acceptQuest() {
 
 	if result.Success {
 		fmt.Printf("[Accept Quest] Quest accepted successfully!\n")
+		sendQuestAcceptedMessage(userID)
 	} else {
 		errMsg := result.Message
 		if result.Error != "" {
 			errMsg = result.Error
 		}
 		fmt.Printf("[Accept Quest] Failed to accept quest: %s\n", errMsg)
+	}
+}
+
+func sendQuestAcceptedMessage(userID string) {
+	body := map[string]string{
+		"message":   "Quest Accepted.",
+		"toUserId":  userID,
+	}
+	jsonBody, _ := json.Marshal(body)
+
+	fmt.Printf("[Send PM] Sending private message: %s\n", string(jsonBody))
+
+	resp, err := habiticaRequest("POST", "/members/send-private-message", bytes.NewReader(jsonBody))
+	if err != nil {
+		fmt.Printf("[Send PM] HTTP request failed: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+	fmt.Printf("[Send PM] Response status: %d, body: %s\n", resp.StatusCode, string(respBody))
+
+	var result struct {
+		Success bool   `json:"success"`
+		Error   string `json:"error"`
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		fmt.Printf("[Send PM] Failed to parse response JSON: %v\n", err)
+		return
+	}
+
+	if result.Success {
+		fmt.Printf("[Send PM] Private message sent successfully!\n")
+	} else {
+		errMsg := result.Message
+		if result.Error != "" {
+			errMsg = result.Error
+		}
+		fmt.Printf("[Send PM] Failed to send message: %s\n", errMsg)
 	}
 }
