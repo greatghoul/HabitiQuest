@@ -78,6 +78,13 @@ type WebhookRequest struct {
 	} `json:"options"`
 }
 
+type QuestAcceptResponse struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   string      `json:"error,omitempty"`
+	Message string      `json:"message,omitempty"`
+}
+
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
@@ -318,12 +325,46 @@ func configureWebhook(c *gin.Context) {
 }
 
 func handleWebhookEvent(c *gin.Context) {
-	fmt.Printf("[Webhook Event] Query params: %s\n", c.Request.URL.RawQuery)
-	fmt.Printf("[Webhook Event] Headers:\n")
-	for k, v := range c.Request.Header {
-		fmt.Printf("  %s: %s\n", k, v)
-	}
-	body, _ := io.ReadAll(c.Request.Body)
-	fmt.Printf("[Webhook Event] Body: %s\n", string(body))
+	fmt.Printf("[Webhook Event] Received quest invitation, accepting...\n")
+
+	go acceptQuest()
 	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func acceptQuest() {
+	userID := os.Getenv("HABITICA_USER_ID")
+	apiToken := os.Getenv("HABITICA_API_TOKEN")
+
+	if userID == "" || apiToken == "" {
+		fmt.Printf("[Accept Quest] Error: HABITICA_USER_ID or HABITICA_API_TOKEN not set\n")
+		return
+	}
+
+	fmt.Printf("[Accept Quest] Calling Habitica API: POST /groups/party/quests/accept\n")
+
+	resp, err := habiticaRequest("POST", "/groups/party/quests/accept", nil)
+	if err != nil {
+		fmt.Printf("[Accept Quest] HTTP request failed: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+	fmt.Printf("[Accept Quest] Response status: %d, body: %s\n", resp.StatusCode, string(respBody))
+
+	var result QuestAcceptResponse
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		fmt.Printf("[Accept Quest] Failed to parse response JSON: %v\n", err)
+		return
+	}
+
+	if result.Success {
+		fmt.Printf("[Accept Quest] Quest accepted successfully!\n")
+	} else {
+		errMsg := result.Message
+		if result.Error != "" {
+			errMsg = result.Error
+		}
+		fmt.Printf("[Accept Quest] Failed to accept quest: %s\n", errMsg)
+	}
 }
