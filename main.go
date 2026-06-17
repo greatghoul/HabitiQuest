@@ -327,7 +327,7 @@ func configureWebhook(c *gin.Context) {
 func handleWebhookEvent(c *gin.Context) {
 	fmt.Printf("[Webhook Event] Received quest invitation, accepting...\n")
 
-	go acceptQuest()
+	acceptQuest()
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
@@ -372,8 +372,8 @@ func acceptQuest() {
 
 func sendQuestAcceptedMessage(userID string) {
 	body := map[string]string{
-		"message":   "Quest Accepted.",
-		"toUserId":  userID,
+		"message":  "Quest Accepted.",
+		"toUserId": userID,
 	}
 	jsonBody, _ := json.Marshal(body)
 
