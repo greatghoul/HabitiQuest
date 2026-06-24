@@ -1,8 +1,10 @@
-# HabitiQuest - Vercel + Go + Gin + Habitica
+# HabitiQuest - Habitica Quest Auto Accept Webhook App
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fgreatghoul%2FHabitiQuest&env=HABITICA_USER_ID,HABITICA_API_TOKEN&envDescription=Habitica%20API%20credentials%20-%20get%20them%20from%20https%3A%2F%2Fhabitica.com%2Fuser%2Fsettings%2Fapi&project-name=habiti-quest&repository-name=habiti-quest)
 
-A Hello World app built with [Go](https://go.dev/) and [Gin](https://gin-gonic.com/), deployed on [Vercel](https://vercel.com/), integrating the [Habitica](https://habitica.com/) API.
+A Webhook app built with [Go](https://go.dev/) and [Gin](https://gin-gonic.com/), deployed on [Vercel](https://vercel.com/), integrating the [Habitica](https://habitica.com/) API.
+
+> ### [How To Install HabitiQuest to Vercel](https://github.com/greatghoul/HabitiQuest/issues/1)
 
 ## Run Locally
 
@@ -27,6 +29,7 @@ Get them at [Habitica API Settings](https://habitica.com/user/settings/siteData)
 ### Option 1: Deploy Button
 
 Click the button above, fill in `HABITICA_USER_ID` and `HABITICA_API_TOKEN`.
+
 
 ### Option 2: Vercel CLI
 
